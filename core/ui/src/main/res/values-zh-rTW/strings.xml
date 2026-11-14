@@ -64,6 +64,8 @@
     <string name="none">無</string>
     <string name="autoplay_settings">自動播放</string>
     <string name="resume_description">選擇是否從你停止時的進度再續播放影片</string>
+    <string name="fast_seek">快速定位</string>
+    <string name="fast_seek_description">定位到最近的關鍵影格以加快跳轉速度，實際位置可能與目標時間略有偏差</string>
     <string name="grant_permission">授予權限</string>
     <string name="resume">再續播放</string>
     <string name="player_name">播放器</string>

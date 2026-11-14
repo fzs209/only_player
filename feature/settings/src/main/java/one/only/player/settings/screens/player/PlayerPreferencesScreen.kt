@@ -191,6 +191,14 @@ private fun PlayerPreferencesContent(
                     isChecked = uiState.preferences.resume.isEnabled,
                     onClick = { onEvent(PlayerPreferencesUiEvent.TogglePlaybackResume) },
                 )
+                PreferenceSwitch(
+                    modifier = Modifier.testTag("switch_settings_player_fast_seek"),
+                    title = stringResource(id = R.string.fast_seek),
+                    description = stringResource(id = R.string.fast_seek_description),
+                    icon = AppIcons.Speed,
+                    isChecked = uiState.preferences.isFastSeekEnabled,
+                    onClick = { onEvent(PlayerPreferencesUiEvent.ToggleFastSeek) },
+                )
                 PreferenceSlider(
                     modifier = Modifier.testTag("item_settings_player_default_speed"),
                     title = stringResource(id = R.string.default_playback_speed),

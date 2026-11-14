@@ -46,6 +46,7 @@ class PlayerPreferencesViewModel @Inject constructor(
         when (event) {
             is PlayerPreferencesUiEvent.ShowDialog -> showDialog(event.value)
             PlayerPreferencesUiEvent.TogglePlaybackResume -> togglePlaybackResume()
+            PlayerPreferencesUiEvent.ToggleFastSeek -> toggleFastSeek()
             PlayerPreferencesUiEvent.ToggleAutoplay -> toggleAutoplay()
             PlayerPreferencesUiEvent.TogglePauseAtEndOfQueue -> togglePauseAtEndOfQueue()
             PlayerPreferencesUiEvent.ToggleAutoPip -> toggleAutoPip()
@@ -79,6 +80,14 @@ class PlayerPreferencesViewModel @Inject constructor(
                         Resume.NO -> Resume.YES
                     },
                 )
+            }
+        }
+    }
+
+    private fun toggleFastSeek() {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences {
+                it.copy(isFastSeekEnabled = !it.isFastSeekEnabled)
             }
         }
     }
@@ -235,6 +244,7 @@ sealed interface PlayerPreferenceDialog {
 sealed interface PlayerPreferencesUiEvent {
     data class ShowDialog(val value: PlayerPreferenceDialog?) : PlayerPreferencesUiEvent
     data object TogglePlaybackResume : PlayerPreferencesUiEvent
+    data object ToggleFastSeek : PlayerPreferencesUiEvent
     data object ToggleAutoplay : PlayerPreferencesUiEvent
     data object TogglePauseAtEndOfQueue : PlayerPreferencesUiEvent
     data object ToggleAutoPip : PlayerPreferencesUiEvent
