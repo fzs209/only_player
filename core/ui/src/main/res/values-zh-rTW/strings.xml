@@ -213,6 +213,12 @@
     <string name="video">影片</string>
     <string name="playback">播放</string>
     <string name="video_processing">畫面處理</string>
+    <string name="video_output_path">影片輸出路徑（A/B 測試）</string>
+    <string name="video_output_path_effects">效果管線（A）</string>
+    <string name="video_output_path_effects_description">使用目前的 Media3 VideoGraph 影片輸出路徑。</string>
+    <string name="video_output_path_direct">原生直出（B）</string>
+    <string name="video_output_path_direct_description">略過 VideoGraph，使用標準 MediaCodec 影片渲染器。</string>
+    <string name="video_filters_bypassed_description">原生直出模式會暫時略過影片濾鏡；切回效果管線後會恢復。</string>
     <string name="video_filters">影片濾鏡</string>
     <string name="enable_video_filters">啟用影片濾鏡</string>
     <string name="enable_video_filters_description">關閉後跳過 GPU 影片濾鏡以節省電量</string>

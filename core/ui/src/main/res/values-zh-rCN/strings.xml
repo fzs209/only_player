@@ -56,6 +56,12 @@
     <string name="unknown_error">发生未知错误</string>
     <string name="playback">播放</string>
     <string name="video_processing">画面处理</string>
+    <string name="video_output_path">视频输出路径（A/B 测试）</string>
+    <string name="video_output_path_effects">效果管线（A）</string>
+    <string name="video_output_path_effects_description">使用当前 Media3 VideoGraph 视频输出链路。</string>
+    <string name="video_output_path_direct">原生直出（B）</string>
+    <string name="video_output_path_direct_description">绕过 VideoGraph，使用标准 MediaCodec 视频渲染器。</string>
+    <string name="video_filters_bypassed_description">原生直出模式暂时绕过视频滤镜；切回效果管线后会恢复。</string>
     <string name="video_filters">视频滤镜</string>
     <string name="enable_video_filters">启用视频滤镜</string>
     <string name="enable_video_filters_description">关闭后跳过 GPU 视频滤镜以节省电量</string>

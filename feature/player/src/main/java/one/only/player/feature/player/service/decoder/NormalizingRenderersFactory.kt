@@ -21,12 +21,15 @@ import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.FfmpegVideoRenderer
 import io.github.anilbeesetti.nextlib.media3ext.ffdecoder.NextRenderersFactory
 import io.github.anilbeesetti.nextlib.media3ext.renderer.NextTextRenderer
 import one.only.player.core.common.extensions.externalSubtitleFontFilesDir
+import one.only.player.core.model.VideoOutputMode
 
 @OptIn(UnstableApi::class)
 class NormalizingRenderersFactory(
     context: Context,
     private val audioProcessors: Array<AudioProcessor>,
     private val shouldUseAudioExtensionFallback: Boolean,
+    private val videoOutputMode: VideoOutputMode,
+    private val frameTimestampAdjustment: VideoFrameTimestampAdjustment,
 ) : NextRenderersFactory(context) {
 
     override fun buildVideoRenderers(
@@ -49,11 +52,18 @@ class NormalizingRenderersFactory(
             .setMaxDroppedFramesToNotify(MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY)
 
         val firstVideoRendererIndex = out.size
-        val hardwareRenderer = VideoEffectsRenderer(
-            builder = newRendererBuilder(),
-            eventHandler = eventHandler,
-            eventListener = eventListener,
-        )
+        val hardwareRenderer = when (videoOutputMode) {
+            VideoOutputMode.EFFECTS -> VideoEffectsRenderer(
+                builder = newRendererBuilder(),
+                eventHandler = eventHandler,
+                eventListener = eventListener,
+                frameTimestampAdjustment = frameTimestampAdjustment,
+            )
+            VideoOutputMode.DIRECT -> {
+                Log.i(TAG, "Video output path=direct")
+                newRendererBuilder().build()
+            }
+        }
         out.add(hardwareRenderer)
         out.add(DolbyVisionVideoRenderer(newRendererBuilder()))
         if (extensionRendererMode == EXTENSION_RENDERER_MODE_OFF) return

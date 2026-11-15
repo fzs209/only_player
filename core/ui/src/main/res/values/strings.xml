@@ -71,6 +71,12 @@
     <string name="unknown_error">An unknown error has occurred</string>
     <string name="playback">Playback</string>
     <string name="video_processing">Video processing</string>
+    <string name="video_output_path">Video output path (A/B test)</string>
+    <string name="video_output_path_effects">Effects pipeline (A)</string>
+    <string name="video_output_path_effects_description">Use the current Media3 VideoGraph output path.</string>
+    <string name="video_output_path_direct">Native direct output (B)</string>
+    <string name="video_output_path_direct_description">Bypass VideoGraph and use the standard MediaCodec renderer.</string>
+    <string name="video_filters_bypassed_description">Video filters are temporarily bypassed in native direct mode and restored when you switch back to the effects pipeline.</string>
     <string name="video_filters">Video filters</string>
     <string name="enable_video_filters">Enable video filters</string>
     <string name="enable_video_filters_description">Turn this off to skip GPU video filtering and save battery</string>

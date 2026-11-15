@@ -23,6 +23,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlin.math.roundToInt
 import one.only.player.core.model.DecoderPriority
 import one.only.player.core.model.PlayerPreferences
+import one.only.player.core.model.VideoOutputMode
 import one.only.player.core.ui.R
 import one.only.player.core.ui.components.AppDialogHost
 import one.only.player.core.ui.components.AppScaffold
@@ -118,6 +119,21 @@ private fun DecoderPreferencesContent(
                     icon = AppIcons.Priority,
                     onClick = { onEvent(DecoderPreferencesUiEvent.ShowDialog(DecoderPreferenceDialog.DecoderPriorityDialog)) },
                 )
+                ClickablePreferenceItem(
+                    modifier = Modifier.testTag("item_settings_video_output_mode"),
+                    title = stringResource(R.string.video_output_path),
+                    description = stringResource(
+                        if (preferences.videoOutputMode == VideoOutputMode.EFFECTS) {
+                            R.string.video_output_path_effects_description
+                        } else {
+                            R.string.video_output_path_direct_description
+                        },
+                    ),
+                    icon = AppIcons.Priority,
+                    onClick = {
+                        onEvent(DecoderPreferencesUiEvent.ShowDialog(DecoderPreferenceDialog.VideoOutputModeDialog))
+                    },
+                )
             }
 
             VideoFiltersSettings(
@@ -140,6 +156,28 @@ private fun DecoderPreferencesContent(
                                 isSelected = it == preferences.decoderPriority,
                                 onClick = {
                                     onEvent(DecoderPreferencesUiEvent.UpdateDecoderPriority(it))
+                                    onEvent(DecoderPreferencesUiEvent.ShowDialog(null))
+                                },
+                            )
+                        }
+                    }
+                }
+                DecoderPreferenceDialog.VideoOutputModeDialog -> {
+                    OptionsDialog(
+                        text = stringResource(R.string.video_output_path),
+                        onDismissClick = { onEvent(DecoderPreferencesUiEvent.ShowDialog(null)) },
+                    ) {
+                        items(VideoOutputMode.entries.toTypedArray()) { mode ->
+                            val label = when (mode) {
+                                VideoOutputMode.EFFECTS -> stringResource(R.string.video_output_path_effects)
+                                VideoOutputMode.DIRECT -> stringResource(R.string.video_output_path_direct)
+                            }
+                            RadioTextButton(
+                                modifier = Modifier.testTag("option_settings_video_output_mode_${mode.name.lowercase()}"),
+                                text = label,
+                                isSelected = mode == preferences.videoOutputMode,
+                                onClick = {
+                                    onEvent(DecoderPreferencesUiEvent.UpdateVideoOutputMode(mode))
                                     onEvent(DecoderPreferencesUiEvent.ShowDialog(null))
                                 },
                             )
@@ -188,7 +226,13 @@ private fun VideoFiltersSettings(
         PreferenceSwitch(
             modifier = Modifier.testTag("switch_settings_video_filters"),
             title = stringResource(R.string.enable_video_filters),
-            description = stringResource(R.string.enable_video_filters_description),
+            description = stringResource(
+                if (preferences.videoOutputMode == VideoOutputMode.DIRECT) {
+                    R.string.video_filters_bypassed_description
+                } else {
+                    R.string.enable_video_filters_description
+                },
+            ),
             icon = AppIcons.Brightness,
             isChecked = preferences.shouldApplyVideoFilters,
             onClick = { onEvent(DecoderPreferencesUiEvent.ToggleVideoFilters) },

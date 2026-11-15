@@ -165,7 +165,11 @@ internal class VideoEffectsCoordinator(
         Logger.debug(TAG, "Video effects availability: available=$isVideoEffectsAvailable decoder=$activeDecoderPriority")
     }
 
-    fun isAvailable(): Boolean = shouldApplyVideoEffects(activeDecoderPriority, currentFormat)
+    fun isAvailable(): Boolean = shouldApplyVideoEffects(
+        decoderPriority = activeDecoderPriority,
+        videoOutputMode = currentPreferencesProvider().videoOutputMode,
+        format = currentFormat,
+    )
 
     private fun schedule(
         player: ExoPlayer,

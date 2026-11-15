@@ -15,6 +15,7 @@ import one.only.player.core.data.repository.PreferencesRepository
 import one.only.player.core.model.DecoderPriority
 import one.only.player.core.model.PlayerPreferences
 import one.only.player.core.model.VideoFilterPreset
+import one.only.player.core.model.VideoOutputMode
 import one.only.player.core.model.toVideoFilterPreset
 import one.only.player.core.model.withVideoFilterAdjustment
 import one.only.player.core.model.withVideoFilterPresetApplied
@@ -52,6 +53,7 @@ class DecoderPreferencesViewModel @Inject constructor(
         when (event) {
             is DecoderPreferencesUiEvent.ShowDialog -> showDialog(event.value)
             is DecoderPreferencesUiEvent.UpdateDecoderPriority -> updateDecoderPriority(event.value)
+            is DecoderPreferencesUiEvent.UpdateVideoOutputMode -> updateVideoOutputMode(event.value)
             DecoderPreferencesUiEvent.ToggleVideoFilters -> toggleVideoFilters()
             is DecoderPreferencesUiEvent.UpdateVideoBrightness -> updateVideoBrightness(event.value)
             is DecoderPreferencesUiEvent.UpdateVideoContrast -> updateVideoContrast(event.value)
@@ -75,6 +77,14 @@ class DecoderPreferencesViewModel @Inject constructor(
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
                 it.copy(decoderPriority = value)
+            }
+        }
+    }
+
+    private fun updateVideoOutputMode(value: VideoOutputMode) {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences {
+                it.copy(videoOutputMode = value)
             }
         }
     }
@@ -165,6 +175,7 @@ data class DecoderPreferencesUiState(
 
 sealed interface DecoderPreferenceDialog {
     data object DecoderPriorityDialog : DecoderPreferenceDialog
+    data object VideoOutputModeDialog : DecoderPreferenceDialog
     data object VideoFilterPresets : DecoderPreferenceDialog
     data object SaveVideoFilterPreset : DecoderPreferenceDialog
 }
@@ -172,6 +183,7 @@ sealed interface DecoderPreferenceDialog {
 sealed interface DecoderPreferencesUiEvent {
     data class ShowDialog(val value: DecoderPreferenceDialog?) : DecoderPreferencesUiEvent
     data class UpdateDecoderPriority(val value: DecoderPriority) : DecoderPreferencesUiEvent
+    data class UpdateVideoOutputMode(val value: VideoOutputMode) : DecoderPreferencesUiEvent
     data object ToggleVideoFilters : DecoderPreferencesUiEvent
     data class UpdateVideoBrightness(val value: Float) : DecoderPreferencesUiEvent
     data class UpdateVideoContrast(val value: Float) : DecoderPreferencesUiEvent

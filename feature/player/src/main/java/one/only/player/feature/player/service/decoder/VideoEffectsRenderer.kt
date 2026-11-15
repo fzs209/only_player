@@ -24,6 +24,7 @@ internal class VideoEffectsRenderer(
     builder: Builder,
     eventHandler: Handler,
     eventListener: VideoRendererEventListener,
+    private val frameTimestampAdjustment: VideoFrameTimestampAdjustment,
 ) : MediaCodecVideoRenderer(builder) {
 
     private val eventDispatcher = VideoRendererEventListener.EventDispatcher(eventHandler, eventListener)
@@ -46,6 +47,12 @@ internal class VideoEffectsRenderer(
         super.changeVideoSinkInputStream(videoSink, inputType, format, firstFrameReleaseInstruction)
         // 效果管线可能不重发尺寸事件，此处已应用解码裁剪、旋转和像素比例。
         eventDispatcher.videoSizeChanged(VideoSize(format.width, format.height, format.pixelWidthHeightRatio))
+    }
+
+    override fun onProcessedStreamChange() {
+        super.onProcessedStreamChange()
+        frameTimestampAdjustment.offsetUs = getBufferTimestampAdjustmentUs()
+            .takeUnless { it == -C.TIME_UNSET }
     }
 
     override fun onDisabled() {

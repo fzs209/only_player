@@ -93,6 +93,7 @@ data class PlayerPreferences(
 
     // 解码偏好
     val decoderPriority: DecoderPriority = DecoderPriority.AUTOMATIC,
+    val videoOutputMode: VideoOutputMode = VideoOutputMode.EFFECTS,
 ) {
 
     companion object {

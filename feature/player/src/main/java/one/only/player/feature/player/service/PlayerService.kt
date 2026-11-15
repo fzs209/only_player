@@ -105,6 +105,7 @@ import one.only.player.core.model.PlayerPreferences
 import one.only.player.core.model.Resume
 import one.only.player.core.model.SubtitleCalibration
 import one.only.player.core.model.ThemeConfig
+import one.only.player.core.model.VideoOutputMode
 import one.only.player.core.ui.R as coreUiR
 import one.only.player.feature.player.PlayerActivity
 import one.only.player.feature.player.datasource.FtpDataSource
@@ -145,6 +146,7 @@ import one.only.player.feature.player.service.audio.toAudioEqualizerSettings
 import one.only.player.feature.player.service.audio.toPlaybackAudioAttributes
 import one.only.player.feature.player.service.decoder.DolbyPreferringMediaCodecSelector
 import one.only.player.feature.player.service.decoder.NormalizingRenderersFactory
+import one.only.player.feature.player.service.decoder.VideoFrameTimestampAdjustment
 import one.only.player.feature.player.service.decoder.extensionRendererMode
 import one.only.player.feature.player.service.decoder.logName
 import one.only.player.feature.player.service.decoder.shouldEnableDecoderFallback
@@ -253,6 +255,7 @@ class PlayerService : MediaSessionService() {
         currentPreferencesProvider = ::playerPreferences,
         currentPlayerProvider = { mediaSession?.player as? ExoPlayer },
     )
+    private val frameTimestampAdjustment = VideoFrameTimestampAdjustment()
     private var isAmbienceModeEnabled = false
     private var ambienceTargetAspectRatio = DEFAULT_AMBIENCE_TARGET_ASPECT_RATIO
     private val subtitleTrackSelector = SubtitleTrackSelector { playerPreferences.preferredSubtitleLanguage }
@@ -285,6 +288,7 @@ class PlayerService : MediaSessionService() {
     private var pendingRememberedSubtitleSelection: PendingSubtitleSelection? = null
     private var pendingExternalSubtitleSelection: ExternalSubtitleSelection? = null
     private var activeDecoderPriority: DecoderPriority = DecoderPriority.AUTOMATIC
+    private var activeVideoOutputMode: VideoOutputMode = VideoOutputMode.EFFECTS
     private var hasPausedAtEndOfQueue = false
     private var customPictureInPictureOverlay: CustomPictureInPictureOverlay? = null
     private var sessionLoadErrorHandlingPolicy: LoadErrorHandlingPolicy? = null
@@ -313,6 +317,8 @@ class PlayerService : MediaSessionService() {
             tag = TAG,
             currentPlayerProvider = { mediaSession?.player as? ExoPlayer },
             videoEffectsCoordinator = videoEffectsCoordinator,
+            videoOutputModeProvider = { activeVideoOutputMode },
+            frameTimestampAdjustment = frameTimestampAdjustment,
         )
     }
 
@@ -798,7 +804,7 @@ class PlayerService : MediaSessionService() {
         val mediaItems = (0 until failedPlayer.mediaItemCount).map {
             failedPlayer.getMediaItemAt(it).copy(
                 hasRenderedFirstFrame = false,
-                isVideoEffectsAvailable = shouldApplyVideoEffects(retryDecoderPriority),
+                isVideoEffectsAvailable = shouldApplyVideoEffects(retryDecoderPriority, activeVideoOutputMode),
             )
         }
         if (mediaItems.isEmpty()) return false
@@ -876,21 +882,28 @@ class PlayerService : MediaSessionService() {
         seekTo(mediaItemIndex, positionMs)
     }
 
-    private fun switchPlayerDecoderPriority(decoderPriority: DecoderPriority) {
-        if (decoderPriority == activeDecoderPriority) return
+    private fun switchPlayerConfiguration(
+        decoderPriority: DecoderPriority,
+        videoOutputMode: VideoOutputMode,
+    ) {
+        if (decoderPriority == activeDecoderPriority && videoOutputMode == activeVideoOutputMode) return
         val session = mediaSession ?: return
         val currentPlayer = session.player as? ExoPlayer ?: return
-        // 会话接入新播放器前，整条队列必须携带新解码器的可用状态。
+        // 会话接入新播放器前，整条队列必须携带新输出路径的可用状态。
         val mediaItems = (0 until currentPlayer.mediaItemCount).map {
             currentPlayer.getMediaItemAt(it).copy(
                 hasRenderedFirstFrame = false,
-                isVideoEffectsAvailable = shouldApplyVideoEffects(decoderPriority),
+                isVideoEffectsAvailable = shouldApplyVideoEffects(decoderPriority, videoOutputMode),
             )
         }
         if (mediaItems.isEmpty()) {
-            Logger.info(TAG, "Switch decoder to ${decoderPriority.logName()} without active media items")
+            Logger.info(
+                TAG,
+                "Switch player configuration decoder=${decoderPriority.logName()} videoOutput=${videoOutputMode.name} without active media items",
+            )
             val nextPlayer = createPlayer(
                 decoderPriority = decoderPriority,
+                videoOutputMode = videoOutputMode,
             )
             audioEffectsCoordinator.releaseLoudnessEnhancer()
             currentPlayer.removeListener(playbackStateListener)
@@ -912,12 +925,15 @@ class PlayerService : MediaSessionService() {
         val subtitleDelayMilliseconds = currentPlayer.playerSpecificSubtitleDelayMilliseconds
         val subtitleSpeed = currentPlayer.playerSpecificSubtitleSpeed
         val currentDecoderPriority = activeDecoderPriority
+        val currentVideoOutputMode = activeVideoOutputMode
         val nextPlayer = createPlayer(
             decoderPriority = decoderPriority,
+            videoOutputMode = videoOutputMode,
         )
         Logger.info(
             TAG,
-            "Switch decoder from ${currentDecoderPriority.logName()} to ${decoderPriority.logName()} at index=$currentIndex position=$playbackPosition",
+            "Switch player configuration decoder=${currentDecoderPriority.logName()}->${decoderPriority.logName()} " +
+                "videoOutput=${currentVideoOutputMode.name}->${videoOutputMode.name} index=$currentIndex position=$playbackPosition",
         )
 
         nextPlayer.setMediaItems(mediaItems, currentIndex, playbackPosition)
@@ -954,7 +970,11 @@ class PlayerService : MediaSessionService() {
             putLong(CustomCommands.VIDEO_OUTPUT_GENERATION_KEY, ++videoOutputGeneration)
         }
         customPictureInPictureOverlay?.replacePlayer(nextPlayer)
-        Logger.info(TAG, "Rebind video output generation=$videoOutputGeneration decoder=${activeDecoderPriority.logName()}")
+        Logger.info(
+            TAG,
+            "Rebind video output generation=$videoOutputGeneration decoder=${activeDecoderPriority.logName()} " +
+                "videoOutput=${activeVideoOutputMode.name}",
+        )
     }
 
     private fun applyAmbienceModeToPlayer(player: ExoPlayer?) {
@@ -1679,8 +1699,10 @@ class PlayerService : MediaSessionService() {
 
     private fun createPlayer(
         decoderPriority: DecoderPriority,
+        videoOutputMode: VideoOutputMode = playerPreferences.videoOutputMode,
     ): ExoPlayer {
         activeDecoderPriority = decoderPriority
+        activeVideoOutputMode = videoOutputMode
         videoEffectsCoordinator.setDecoderPriority(decoderPriority)
         val extensionRendererMode = decoderPriority.extensionRendererMode()
         val shouldEnableDecoderFallback = decoderPriority.shouldEnableDecoderFallback()
@@ -1690,12 +1712,18 @@ class PlayerService : MediaSessionService() {
         val oemDolby = DolbyAudioCapabilities.oemDolbyProcessing(applicationContext)
         Logger.info(
             TAG,
-            "Create player decoder=${decoderPriority.logName()} policy=$decoderPriority extensionRendererMode=$extensionRendererMode decoderFallback=$shouldEnableDecoderFallback audioExtensionFallback=$shouldUseAudioExtensionFallback spatial=${preferences.isSpatialAudioEnabled} spatializer(supported=${spatializer.isSupported}, available=${spatializer.isAvailable}, enabled=${spatializer.isEnabled}) oemDolby(present=${oemDolby.isPresent}, implementer=${oemDolby.implementer}, effect=${oemDolby.effectName})",
+            "Create player decoder=${decoderPriority.logName()} videoOutput=${videoOutputMode.name} policy=$decoderPriority " +
+                "extensionRendererMode=$extensionRendererMode decoderFallback=$shouldEnableDecoderFallback " +
+                "audioExtensionFallback=$shouldUseAudioExtensionFallback spatial=${preferences.isSpatialAudioEnabled} " +
+                "spatializer(supported=${spatializer.isSupported}, available=${spatializer.isAvailable}, enabled=${spatializer.isEnabled}) " +
+                "oemDolby(present=${oemDolby.isPresent}, implementer=${oemDolby.implementer}, effect=${oemDolby.effectName})",
         )
         val renderersFactory = NormalizingRenderersFactory(
             context = applicationContext,
             audioProcessors = audioEffectsCoordinator.createAudioProcessors(preferences),
             shouldUseAudioExtensionFallback = shouldUseAudioExtensionFallback,
+            videoOutputMode = videoOutputMode,
+            frameTimestampAdjustment = frameTimestampAdjustment,
         )
             .setMediaCodecSelector(DolbyPreferringMediaCodecSelector)
             .setEnableDecoderFallback(shouldEnableDecoderFallback)
@@ -1740,8 +1768,15 @@ class PlayerService : MediaSessionService() {
         super.onCreate()
         serviceScope.launch {
             preferencesRepository.playerPreferences
-                .distinctUntilChanged { old, new -> old.decoderPriority == new.decoderPriority }
-                .collect { preferences -> switchPlayerDecoderPriority(preferences.decoderPriority) }
+                .distinctUntilChanged { old, new ->
+                    old.decoderPriority == new.decoderPriority && old.videoOutputMode == new.videoOutputMode
+                }
+                .collect { preferences ->
+                    switchPlayerConfiguration(
+                        decoderPriority = preferences.decoderPriority,
+                        videoOutputMode = preferences.videoOutputMode,
+                    )
+                }
         }
         serviceScope.launch {
             preferencesRepository.playerPreferences
@@ -2039,7 +2074,7 @@ class PlayerService : MediaSessionService() {
                                 videoWidth = videoWidth,
                                 videoHeight = videoHeight,
                                 isApproximateSeekEnabled = isApproximateSeekEnabled,
-                                isVideoEffectsAvailable = shouldApplyVideoEffects(activeDecoderPriority),
+                                isVideoEffectsAvailable = shouldApplyVideoEffects(activeDecoderPriority, activeVideoOutputMode),
                                 requestHeaders = mediaItem.mediaMetadata.requestHeaders,
                                 remoteServerId = mediaItem.mediaMetadata.remoteServerId,
                                 remoteFilePath = mediaItem.mediaMetadata.remoteFilePath,
