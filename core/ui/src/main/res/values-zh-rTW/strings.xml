@@ -262,6 +262,10 @@
     <string name="duration">時間長度</string>
     <string name="decoder">解碼器</string>
     <string name="seek_increment">跳轉增量</string>
+    <string name="fast_seek_min_duration">快速定位閾值</string>
+    <string name="fast_seek_min_duration_all">所有影片皆使用快速定位</string>
+    <string name="fast_seek_min_duration_minutes">時長 %1$d 分鐘以上的影片使用快速定位</string>
+    <string name="reset_fast_seek_min_duration">重設快速定位閾值</string>
     <string name="audio">音訊</string>
     <string name="manage_folders">管理資料夾</string>
     <string name="default_playback_speed">預設播放速度</string>

@@ -7,7 +7,7 @@ data class PlayerPreferences(
     val resume: Resume = Resume.YES,
     val shouldRememberPlayerBrightness: Boolean = false,
     val playerBrightness: Float = 0.5f,
-    val minDurationForFastSeek: Long = 120000L,
+    val minDurationForFastSeek: Long = DEFAULT_MIN_DURATION_FOR_FAST_SEEK_MS,
     val shouldRememberAudioTrack: Boolean = true,
     val shouldRememberSubtitleTrack: Boolean = true,
     val playerScreenOrientation: ScreenOrientation = ScreenOrientation.VIDEO_ORIENTATION,
@@ -97,6 +97,9 @@ data class PlayerPreferences(
 
     companion object {
         const val DEFAULT_SEEK_INCREMENT = 10
+        const val DEFAULT_MIN_DURATION_FOR_FAST_SEEK_MS = 120000L
+        const val MAX_MIN_DURATION_FOR_FAST_SEEK_MINUTES = 60
+        const val MILLIS_PER_MINUTE = 60000L
         const val DEFAULT_SEEK_SENSITIVITY = 0.50f
         const val DEFAULT_VOLUME_GESTURE_SENSITIVITY = 0.50f
         const val DEFAULT_BRIGHTNESS_GESTURE_SENSITIVITY = 0.50f

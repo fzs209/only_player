@@ -72,6 +72,12 @@ private fun GesturePreferencesContent(
     onNavigateUp: () -> Unit = {},
 ) {
     val scrollBehavior = MiuixScrollBehavior()
+    val fastSeekMinMinutes = (uiState.preferences.minDurationForFastSeek / PlayerPreferences.MILLIS_PER_MINUTE).toInt()
+        .coerceIn(0, PlayerPreferences.MAX_MIN_DURATION_FOR_FAST_SEEK_MINUTES)
+    val fastSeekMinDescription = when (fastSeekMinMinutes) {
+        0 -> stringResource(R.string.fast_seek_min_duration_all)
+        else -> stringResource(R.string.fast_seek_min_duration_minutes, fastSeekMinMinutes)
+    }
 
     AppScaffold(
         topBar = {
@@ -153,6 +159,29 @@ private fun GesturePreferencesContent(
                             modifier = Modifier.testTag("btn_reset_settings_gesture_seek_increment"),
                             onClick = { onEvent(GesturePreferencesUiEvent.UpdateSeekIncrement(PlayerPreferences.DEFAULT_SEEK_INCREMENT)) },
                             contentDescription = stringResource(id = R.string.reset_seek_increment),
+                        )
+                    },
+                )
+                PreferenceSlider(
+                    modifier = Modifier.testTag("item_settings_gesture_fast_seek_min_duration"),
+                    title = stringResource(R.string.fast_seek_min_duration),
+                    description = fastSeekMinDescription,
+                    icon = AppIcons.Replay,
+                    value = fastSeekMinMinutes.toFloat(),
+                    valueRange = 0f..PlayerPreferences.MAX_MIN_DURATION_FOR_FAST_SEEK_MINUTES.toFloat(),
+                    steps = PlayerPreferences.MAX_MIN_DURATION_FOR_FAST_SEEK_MINUTES - 1,
+                    onValueChange = { onEvent(GesturePreferencesUiEvent.UpdateFastSeekMinDuration(it.toInt())) },
+                    trailingContent = {
+                        ResetIconButton(
+                            modifier = Modifier.testTag("btn_reset_settings_gesture_fast_seek_min_duration"),
+                            onClick = {
+                                onEvent(
+                                    GesturePreferencesUiEvent.UpdateFastSeekMinDuration(
+                                        (PlayerPreferences.DEFAULT_MIN_DURATION_FOR_FAST_SEEK_MS / PlayerPreferences.MILLIS_PER_MINUTE).toInt(),
+                                    ),
+                                )
+                            },
+                            contentDescription = stringResource(id = R.string.reset_fast_seek_min_duration),
                         )
                     },
                 )
