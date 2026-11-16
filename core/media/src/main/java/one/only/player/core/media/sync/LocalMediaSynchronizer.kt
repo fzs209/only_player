@@ -1019,7 +1019,7 @@ class LocalMediaSynchronizer @Inject constructor(
 
     private fun File.collectNoMediaVideos(hasNoMediaAncestor: Boolean = false): List<MediaVideo> {
         if (!exists() || !isDirectory) return emptyList()
-        if (name.startsWith(".") || name in EXCLUDED_DIRECTORY_NAMES) return emptyList()
+        if (hasHiddenPathComponent() || name in EXCLUDED_DIRECTORY_NAMES) return emptyList()
 
         val children = runCatching { listFiles()?.toList().orEmpty() }
             .getOrElse { return emptyList() }
@@ -1042,7 +1042,7 @@ class LocalMediaSynchronizer @Inject constructor(
 
     private fun File.collectVisibleUnindexedVideoPaths(indexedPaths: Set<StoragePath>): List<StoragePath> {
         if (!exists() || !isDirectory) return emptyList()
-        if (name.startsWith(".")) return emptyList()
+        if (hasHiddenPathComponent()) return emptyList()
         if (name.equals("Android", ignoreCase = true)) return emptyList()
         if (name in EXCLUDED_DIRECTORY_NAMES) return emptyList()
 
