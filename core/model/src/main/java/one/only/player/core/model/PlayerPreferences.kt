@@ -8,6 +8,7 @@ data class PlayerPreferences(
     val shouldRememberPlayerBrightness: Boolean = false,
     val playerBrightness: Float = 0.5f,
     val minDurationForFastSeek: Long = 120000L,
+    val seekMode: SeekMode = SeekMode.EXACT,
     val shouldRememberAudioTrack: Boolean = true,
     val shouldRememberSubtitleTrack: Boolean = true,
     val playerScreenOrientation: ScreenOrientation = ScreenOrientation.VIDEO_ORIENTATION,

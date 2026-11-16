@@ -262,6 +262,11 @@
     <string name="duration">時間長度</string>
     <string name="decoder">解碼器</string>
     <string name="seek_increment">跳轉增量</string>
+    <string name="seek_mode">定位方式</string>
+    <string name="seek_mode_exact">精確定位</string>
+    <string name="seek_mode_closest_sync">快速定位（最近關鍵影格）</string>
+    <string name="seek_mode_previous_sync">快速定位（前一關鍵影格）</string>
+    <string name="seek_mode_next_sync">快速定位（後一關鍵影格）</string>
     <string name="audio">音訊</string>
     <string name="manage_folders">管理資料夾</string>
     <string name="default_playback_speed">預設播放速度</string>

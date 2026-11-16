@@ -25,10 +25,12 @@ import one.only.player.core.common.extensions.round
 import one.only.player.core.common.extensions.toString
 import one.only.player.core.model.DoubleTapGesture
 import one.only.player.core.model.PlayerPreferences
+import one.only.player.core.model.SeekMode
 import one.only.player.core.ui.R
 import one.only.player.core.ui.components.AppDialogHost
 import one.only.player.core.ui.components.AppScaffold
 import one.only.player.core.ui.components.AppTopAppBar
+import one.only.player.core.ui.components.ClickablePreferenceItem
 import one.only.player.core.ui.components.DoneCancelDialog
 import one.only.player.core.ui.components.PageContentTopPadding
 import one.only.player.core.ui.components.PreferenceGroup
@@ -155,6 +157,13 @@ private fun GesturePreferencesContent(
                             contentDescription = stringResource(id = R.string.reset_seek_increment),
                         )
                     },
+                )
+                ClickablePreferenceItem(
+                    modifier = Modifier.testTag("item_settings_gesture_seek_mode"),
+                    title = stringResource(R.string.seek_mode),
+                    description = uiState.preferences.seekMode.name(),
+                    icon = AppIcons.Replay,
+                    onClick = { onEvent(GesturePreferencesUiEvent.ShowDialog(GesturePreferenceDialog.SeekModeDialog)) },
                 )
             }
 
@@ -283,6 +292,25 @@ private fun GesturePreferencesContent(
                                 isSelected = (it == uiState.preferences.doubleTapGesture),
                                 onClick = {
                                     onEvent(GesturePreferencesUiEvent.UpdateDoubleTapGesture(it))
+                                    onEvent(GesturePreferencesUiEvent.ShowDialog(null))
+                                },
+                            )
+                        }
+                    }
+                }
+
+                GesturePreferenceDialog.SeekModeDialog -> {
+                    OptionsDialog(
+                        text = stringResource(id = R.string.seek_mode),
+                        onDismissClick = { onEvent(GesturePreferencesUiEvent.ShowDialog(null)) },
+                    ) {
+                        items(SeekMode.entries.toTypedArray()) {
+                            RadioTextButton(
+                                modifier = Modifier.testTag("option_settings_gesture_seek_mode_${it.name.lowercase()}"),
+                                text = it.name(),
+                                isSelected = (it == uiState.preferences.seekMode),
+                                onClick = {
+                                    onEvent(GesturePreferencesUiEvent.UpdateSeekMode(it))
                                     onEvent(GesturePreferencesUiEvent.ShowDialog(null))
                                 },
                             )

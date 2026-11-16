@@ -135,6 +135,7 @@ import one.only.player.feature.player.extensions.subtitleDelayMilliseconds
 import one.only.player.feature.player.extensions.subtitleSpeed
 import one.only.player.feature.player.extensions.subtitleTrackIndex
 import one.only.player.feature.player.extensions.switchTrack
+import one.only.player.feature.player.extensions.toSeekParameters
 import one.only.player.feature.player.extensions.videoZoom
 import one.only.player.feature.player.extensions.withoutTrackPeriodPrefix
 import one.only.player.feature.player.model.extractVideoChapters
@@ -1313,8 +1314,8 @@ class PlayerService : MediaSessionService() {
     }
 
     private fun applySeekParameters(player: ExoPlayer) {
-        // 落定的 seek 必须精确到目标时间；仅拖动预览期允许退到最近关键帧
-        player.setSeekParameters(if (isSeekPreviewEnabled) PREVIEW_SEEK_PARAMETERS else EXACT_SEEK_PARAMETERS)
+        // 落定的 seek 按用户选择的定位方式；拖动预览期固定退到最近关键帧
+        player.setSeekParameters(if (isSeekPreviewEnabled) PREVIEW_SEEK_PARAMETERS else playerPreferences.seekMode.toSeekParameters())
     }
 
     private fun MediaItem?.shouldUseFastSeek(): Boolean {
@@ -1739,6 +1740,11 @@ class PlayerService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        serviceScope.launch {
+            preferencesRepository.playerPreferences
+                .distinctUntilChanged { old, new -> old.seekMode == new.seekMode }
+                .collect { (mediaSession?.player as? ExoPlayer)?.let(::applySeekParameters) }
+        }
         serviceScope.launch {
             preferencesRepository.playerPreferences
                 .distinctUntilChanged { old, new -> old.decoderPriority == new.decoderPriority }

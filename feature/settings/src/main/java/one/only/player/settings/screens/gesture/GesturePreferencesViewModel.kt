@@ -13,6 +13,7 @@ import one.only.player.core.common.extensions.round
 import one.only.player.core.data.repository.PreferencesRepository
 import one.only.player.core.model.DoubleTapGesture
 import one.only.player.core.model.PlayerPreferences
+import one.only.player.core.model.SeekMode
 
 @HiltViewModel
 class GesturePreferencesViewModel @Inject constructor(
@@ -50,6 +51,7 @@ class GesturePreferencesViewModel @Inject constructor(
             is GesturePreferencesUiEvent.UpdateLongPressControlsSpeed -> updateLongPressControlsSpeed(event.value)
             is GesturePreferencesUiEvent.UpdateSeekIncrement -> updateSeekIncrement(event.value)
             is GesturePreferencesUiEvent.UpdateSeekSensitivity -> updateSeekSensitivity(event.value)
+            is GesturePreferencesUiEvent.UpdateSeekMode -> updateSeekMode(event.mode)
             is GesturePreferencesUiEvent.UpdateVolumeGestureSensitivity -> updateVolumeGestureSensitivity(event.value)
             is GesturePreferencesUiEvent.UpdateBrightnessGestureSensitivity -> updateBrightnessGestureSensitivity(event.value)
         }
@@ -168,6 +170,12 @@ class GesturePreferencesViewModel @Inject constructor(
         }
     }
 
+    private fun updateSeekMode(mode: SeekMode) {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences { it.copy(seekMode = mode) }
+        }
+    }
+
     private fun updateSeekSensitivity(value: Float) {
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
@@ -202,6 +210,7 @@ data class GesturePreferencesUiState(
 sealed interface GesturePreferenceDialog {
     data object DoubleTapDialog : GesturePreferenceDialog
     data object LongPressControlsSpeedDialog : GesturePreferenceDialog
+    data object SeekModeDialog : GesturePreferenceDialog
 }
 
 sealed interface GesturePreferencesUiEvent {
@@ -219,6 +228,7 @@ sealed interface GesturePreferencesUiEvent {
     data class UpdateLongPressControlsSpeed(val value: Float) : GesturePreferencesUiEvent
     data class UpdateSeekIncrement(val value: Int) : GesturePreferencesUiEvent
     data class UpdateSeekSensitivity(val value: Float) : GesturePreferencesUiEvent
+    data class UpdateSeekMode(val mode: SeekMode) : GesturePreferencesUiEvent
     data class UpdateVolumeGestureSensitivity(val value: Float) : GesturePreferencesUiEvent
     data class UpdateBrightnessGestureSensitivity(val value: Float) : GesturePreferencesUiEvent
 }

@@ -210,6 +210,11 @@
     <string name="pause_at_end_of_queue_description">Keep the player open on the final frame when the last video finishes</string>
     <string name="seek_increment">Seek increment</string>
     <string name="seconds">%1$s seconds</string>
+    <string name="seek_mode">Seek mode</string>
+    <string name="seek_mode_exact">Exact</string>
+    <string name="seek_mode_closest_sync">Fast (nearest keyframe)</string>
+    <string name="seek_mode_previous_sync">Fast (previous keyframe)</string>
+    <string name="seek_mode_next_sync">Fast (next keyframe)</string>
     <string name="share">Share</string>
     <string name="delete">Delete</string>
     <string name="subtitle_text_encoding">Subtitle text encoding</string>

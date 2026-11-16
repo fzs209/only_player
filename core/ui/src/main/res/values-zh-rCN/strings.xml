@@ -192,6 +192,11 @@
     <string name="pause_at_end_of_queue_description">最后一个视频播完后留在播放器，并停在最后一帧</string>
     <string name="seek_increment">跳转增量</string>
     <string name="seconds">%1$s 秒</string>
+    <string name="seek_mode">定位方式</string>
+    <string name="seek_mode_exact">精确定位</string>
+    <string name="seek_mode_closest_sync">快速定位（最近关键帧）</string>
+    <string name="seek_mode_previous_sync">快速定位（前一关键帧）</string>
+    <string name="seek_mode_next_sync">快速定位（后一关键帧）</string>
     <string name="subtitle_text_encoding">字幕文本编码</string>
     <string name="share">分享</string>
     <string name="delete">删除</string>
