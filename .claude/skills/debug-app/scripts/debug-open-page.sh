@@ -33,9 +33,9 @@ fi
 
 "${ADB[@]}" shell input keyevent KEYCODE_WAKEUP
 "${ADB[@]}" shell wm dismiss-keyguard
-"${ADB[@]}" shell am start -n one.only.player.debug/one.only.player.MainActivity >/dev/null
+"${ADB[@]}" shell am start -n io.github.fzs209.onlyplayer.debug/one.only.player.MainActivity >/dev/null
 RESULT="$(${ADB[@]} shell content call \
-    --uri content://one.only.player.debug.commands \
+    --uri content://io.github.fzs209.onlyplayer.debug.commands \
     --method page.open \
     --arg "$PAGE_ID")"
 

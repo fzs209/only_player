@@ -35,7 +35,7 @@ description: 调试、测试或验证 Only Player 应用功能、页面和代码
 
 ## 指令入口
 
-Debug 包名固定为 `one.only.player.debug`；Activity 为 `one.only.player.debug/one.only.player.MainActivity`，命令 Provider 为 `content://one.only.player.debug.commands`。
+Debug 包名固定为 `io.github.fzs209.onlyplayer.debug`；Activity 为 `io.github.fzs209.onlyplayer.debug/one.only.player.MainActivity`，命令 Provider 为 `content://io.github.fzs209.onlyplayer.debug.commands`。
 
 页面切换优先用脚本，脚本会先 `am start` 拉起 `MainActivity`，再调用 `page.open`：
 
@@ -47,7 +47,7 @@ Debug 包名固定为 `one.only.player.debug`；Activity 为 `one.only.player.de
 
 ```bash
 adb shell content call \
-  --uri content://one.only.player.debug.commands \
+  --uri content://io.github.fzs209.onlyplayer.debug.commands \
   --method <domain.action> \
   --arg <target> \
   --extra value:s:<value> \
