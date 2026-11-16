@@ -64,6 +64,15 @@ private val MediumEntity.storagePath: StoragePath get() = StoragePath.of(path.ca
 
 private fun StoragePath.isInsideExcludedSystemDirectory(): Boolean = value.split(StoragePath.SEPARATOR).any { it in EXCLUDED_DIRECTORY_NAMES }
 
+private fun File.hasHiddenPathComponent(): Boolean {
+    var current: File? = this
+    while (current != null) {
+        if (current.name.startsWith(".")) return true
+        current = current.parentFile
+    }
+    return false
+}
+
 // 扫描目录白名单为空时表示扫描全部存储
 private fun StoragePath.isInsideScanFolders(scanFolderPaths: List<StoragePath>): Boolean = scanFolderPaths.isEmpty() || scanFolderPaths.any { scanFolder -> isInside(scanFolder) }
 
@@ -402,6 +411,7 @@ class LocalMediaSynchronizer @Inject constructor(
             shouldIgnoreNoMediaFiles = preferences.shouldIgnoreNoMediaFiles,
             scanFolderPaths = preferences.scanFolders,
         )
+        pruneHiddenMediaEntries()
         Logger.info(TAG, "refresh syncing ${media.size} media entries")
         if (shouldSkipEmptyMediaSnapshot(media)) {
             Logger.debug(TAG, "syncCurrentMedia elapsed=${System.currentTimeMillis() - startTime}ms")
@@ -650,6 +660,22 @@ class LocalMediaSynchronizer @Inject constructor(
 
         Logger.info(TAG, "Skipped empty media snapshot existing=$existingCount")
         return true
+    }
+
+    private suspend fun pruneHiddenMediaEntries() {
+        val hiddenMedia = mediumDao.getAll().first().filter { medium ->
+            File(medium.path).hasHiddenPathComponent()
+        }
+        if (hiddenMedia.isEmpty()) return
+
+        var removedCount = 0
+        hiddenMedia.forEach { medium ->
+            if (deleteMedium(medium)) removedCount++
+        }
+        if (removedCount > 0) {
+            pruneEmptyDirectories()
+        }
+        Logger.info(TAG, "pruneHiddenMediaEntries found=${hiddenMedia.size} removed=$removedCount")
     }
 
     private suspend fun mergeVisibleMedia(
@@ -985,12 +1011,15 @@ class LocalMediaSynchronizer @Inject constructor(
                 )
             }
         }
-        return mediaVideos.filter { File(it.data).exists() }
+        return mediaVideos.filter { mediaVideo ->
+            val file = File(mediaVideo.data)
+            file.exists() && !file.hasHiddenPathComponent()
+        }
     }
 
     private fun File.collectNoMediaVideos(hasNoMediaAncestor: Boolean = false): List<MediaVideo> {
         if (!exists() || !isDirectory) return emptyList()
-        if (name in EXCLUDED_DIRECTORY_NAMES) return emptyList()
+        if (name.startsWith(".") || name in EXCLUDED_DIRECTORY_NAMES) return emptyList()
 
         val children = runCatching { listFiles()?.toList().orEmpty() }
             .getOrElse { return emptyList() }
@@ -1013,6 +1042,7 @@ class LocalMediaSynchronizer @Inject constructor(
 
     private fun File.collectVisibleUnindexedVideoPaths(indexedPaths: Set<StoragePath>): List<StoragePath> {
         if (!exists() || !isDirectory) return emptyList()
+        if (name.startsWith(".")) return emptyList()
         if (name.equals("Android", ignoreCase = true)) return emptyList()
         if (name in EXCLUDED_DIRECTORY_NAMES) return emptyList()
 
@@ -1036,7 +1066,7 @@ class LocalMediaSynchronizer @Inject constructor(
 
     private fun File.isVisibleVideoFile(): Boolean {
         if (!isFile) return false
-        if (name.startsWith(".trashed-")) return false
+        if (hasHiddenPathComponent()) return false
 
         if (extension.equals(RECYCLE_BIN_EXTENSION, ignoreCase = true)) return true
 
