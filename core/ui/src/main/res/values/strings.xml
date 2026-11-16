@@ -210,10 +210,6 @@
     <string name="pause_at_end_of_queue_description">Keep the player open on the final frame when the last video finishes</string>
     <string name="seek_increment">Seek increment</string>
     <string name="seconds">%1$s seconds</string>
-    <string name="fast_seek_min_duration">Fast seek threshold</string>
-    <string name="fast_seek_min_duration_all">Use fast seek for all videos</string>
-    <string name="fast_seek_min_duration_minutes">Use fast seek for videos of %1$d min or longer</string>
-    <string name="reset_fast_seek_min_duration">Reset fast seek threshold</string>
     <string name="share">Share</string>
     <string name="delete">Delete</string>
     <string name="subtitle_text_encoding">Subtitle text encoding</string>

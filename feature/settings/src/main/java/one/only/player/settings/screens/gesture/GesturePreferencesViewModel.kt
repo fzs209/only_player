@@ -50,7 +50,6 @@ class GesturePreferencesViewModel @Inject constructor(
             is GesturePreferencesUiEvent.UpdateLongPressControlsSpeed -> updateLongPressControlsSpeed(event.value)
             is GesturePreferencesUiEvent.UpdateSeekIncrement -> updateSeekIncrement(event.value)
             is GesturePreferencesUiEvent.UpdateSeekSensitivity -> updateSeekSensitivity(event.value)
-            is GesturePreferencesUiEvent.UpdateFastSeekMinDuration -> updateFastSeekMinDuration(event.minutes)
             is GesturePreferencesUiEvent.UpdateVolumeGestureSensitivity -> updateVolumeGestureSensitivity(event.value)
             is GesturePreferencesUiEvent.UpdateBrightnessGestureSensitivity -> updateBrightnessGestureSensitivity(event.value)
         }
@@ -169,15 +168,6 @@ class GesturePreferencesViewModel @Inject constructor(
         }
     }
 
-    private fun updateFastSeekMinDuration(minutes: Int) {
-        viewModelScope.launch {
-            preferencesRepository.updatePlayerPreferences {
-                val normalizedMinutes = minutes.coerceIn(0, PlayerPreferences.MAX_MIN_DURATION_FOR_FAST_SEEK_MINUTES)
-                it.copy(minDurationForFastSeek = normalizedMinutes * PlayerPreferences.MILLIS_PER_MINUTE)
-            }
-        }
-    }
-
     private fun updateSeekSensitivity(value: Float) {
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
@@ -229,7 +219,6 @@ sealed interface GesturePreferencesUiEvent {
     data class UpdateLongPressControlsSpeed(val value: Float) : GesturePreferencesUiEvent
     data class UpdateSeekIncrement(val value: Int) : GesturePreferencesUiEvent
     data class UpdateSeekSensitivity(val value: Float) : GesturePreferencesUiEvent
-    data class UpdateFastSeekMinDuration(val minutes: Int) : GesturePreferencesUiEvent
     data class UpdateVolumeGestureSensitivity(val value: Float) : GesturePreferencesUiEvent
     data class UpdateBrightnessGestureSensitivity(val value: Float) : GesturePreferencesUiEvent
 }

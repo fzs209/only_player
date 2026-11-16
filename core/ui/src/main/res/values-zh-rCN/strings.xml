@@ -192,10 +192,6 @@
     <string name="pause_at_end_of_queue_description">最后一个视频播完后留在播放器，并停在最后一帧</string>
     <string name="seek_increment">跳转增量</string>
     <string name="seconds">%1$s 秒</string>
-    <string name="fast_seek_min_duration">快速定位阈值</string>
-    <string name="fast_seek_min_duration_all">所有视频均使用快速定位</string>
-    <string name="fast_seek_min_duration_minutes">时长 %1$d 分钟及以上的视频使用快速定位</string>
-    <string name="reset_fast_seek_min_duration">重置快速定位阈值</string>
     <string name="subtitle_text_encoding">字幕文本编码</string>
     <string name="share">分享</string>
     <string name="delete">删除</string>
