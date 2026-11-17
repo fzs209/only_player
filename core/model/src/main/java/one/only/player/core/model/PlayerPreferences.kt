@@ -16,6 +16,7 @@ data class PlayerPreferences(
     val lastPlayerScreenOrientation: LastPlayerScreenOrientation? = null,
     val playerVideoZoom: VideoContentScale = VideoContentScale.BEST_FIT,
     val defaultPlaybackSpeed: Float = 1.0f,
+    val audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
     val shouldApplyVideoFilters: Boolean = false,
     val videoBrightness: Float = DEFAULT_VIDEO_BRIGHTNESS,
     val videoContrast: Float = DEFAULT_VIDEO_CONTRAST,
@@ -151,6 +152,21 @@ data class PlayerPreferences(
         const val MAX_INITIAL_PLAYER_VOLUME_PERCENTAGE = MAX_PLAYER_VOLUME_PERCENTAGE
         const val MAX_SEEK_INCREMENT = 120
     }
+}
+
+@Serializable
+enum class AudioPlaybackSpeedMode {
+    MEDIA3_SONIC,
+    ANDROID_AUDIO_TRACK,
+    PITCH_FOLLOWS_SPEED,
+}
+
+fun AudioPlaybackSpeedMode.pitchFor(speed: Float): Float = when (this) {
+    AudioPlaybackSpeedMode.MEDIA3_SONIC,
+    AudioPlaybackSpeedMode.ANDROID_AUDIO_TRACK,
+    -> 1f
+
+    AudioPlaybackSpeedMode.PITCH_FOLLOWS_SPEED -> speed
 }
 
 fun PlayerPreferences.withSubtitleStyleFrom(preferences: PlayerPreferences): PlayerPreferences = copy(

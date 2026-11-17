@@ -55,6 +55,7 @@ enum class CustomCommands(val customAction: String) {
         const val IS_SCRUBBING_MODE_ENABLED_KEY = "is_scrubbing_mode_enabled"
         const val IS_SEEK_PREVIEW_ENABLED_KEY = "is_seek_preview_enabled"
         const val PLAYBACK_SPEED_KEY = "playback_speed"
+        const val PLAYBACK_PITCH_KEY = "playback_pitch"
         const val SUBTITLE_DELAY_KEY = "subtitle_delay"
         const val SUBTITLE_SPEED_KEY = "subtitle_speed"
         const val LOUDNESS_GAIN_KEY = "loudness_gain"
@@ -148,16 +149,18 @@ fun MediaController.setMediaControllerIsSeekPreviewEnabled(isEnabled: Boolean) {
     sendCustomCommand(CustomCommands.SET_IS_SEEK_PREVIEW_ENABLED.sessionCommand, args)
 }
 
-fun MediaController.setPersistentPlaybackSpeed(speed: Float) {
+fun MediaController.setPersistentPlaybackSpeed(speed: Float, pitch: Float? = null) {
     val args = Bundle().apply {
         putFloat(CustomCommands.PLAYBACK_SPEED_KEY, speed)
+        pitch?.let { putFloat(CustomCommands.PLAYBACK_PITCH_KEY, it) }
     }
     sendCustomCommand(CustomCommands.SET_PERSISTENT_PLAYBACK_SPEED.sessionCommand, args)
 }
 
-fun MediaController.setTransientPlaybackSpeed(speed: Float) {
+fun MediaController.setTransientPlaybackSpeed(speed: Float, pitch: Float? = null) {
     val args = Bundle().apply {
         putFloat(CustomCommands.PLAYBACK_SPEED_KEY, speed)
+        pitch?.let { putFloat(CustomCommands.PLAYBACK_PITCH_KEY, it) }
     }
     sendCustomCommand(CustomCommands.SET_TRANSIENT_PLAYBACK_SPEED.sessionCommand, args)
 }

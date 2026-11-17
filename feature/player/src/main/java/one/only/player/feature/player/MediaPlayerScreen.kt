@@ -268,6 +268,7 @@ internal fun MediaPlayerScreen(
         shouldUseLongPressGesture = playerPreferences.shouldUseLongPressControls,
         shouldUseLongPressVariableSpeed = playerPreferences.shouldUseLongPressVariableSpeed,
         longPressSpeed = playerPreferences.longPressControlsSpeed,
+        audioPlaybackSpeedMode = playerPreferences.audioPlaybackSpeedMode,
     )
     val seekGestureState = rememberSeekGestureState(
         player = player,
@@ -1237,7 +1238,10 @@ internal fun MediaPlayerScreen(
                         onProviderToggle = viewModel::onOnlineSubtitleProviderToggle,
                     )
 
-                    MenuRoute.PlaybackSpeed -> PlaybackSpeedSelectorContent(player = player)
+                    MenuRoute.PlaybackSpeed -> PlaybackSpeedSelectorContent(
+                        player = player,
+                        audioPlaybackSpeedMode = playerPreferences.audioPlaybackSpeedMode,
+                    )
 
                     MenuRoute.VideoContentScale -> VideoContentScaleSelectorContent(
                         videoContentScale = videoZoomAndContentScaleState.videoContentScale,

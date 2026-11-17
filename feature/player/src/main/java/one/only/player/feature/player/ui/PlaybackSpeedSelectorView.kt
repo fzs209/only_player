@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import one.only.player.core.common.extensions.round
+import one.only.player.core.model.AudioPlaybackSpeedMode
 import one.only.player.core.ui.R
 import one.only.player.feature.player.state.rememberPlaybackParametersState
 import one.only.player.feature.player.ui.panel.PanelChip
@@ -45,22 +46,26 @@ fun BoxScope.PlaybackSpeedSelectorView(
     modifier: Modifier = Modifier,
     shouldShow: Boolean,
     player: Player,
+    audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
 ) {
     OverlayView(
         modifier = modifier,
         shouldShow = shouldShow,
         title = stringResource(R.string.select_playback_speed),
     ) {
-        PlaybackSpeedSelectorContent(player = player)
+        PlaybackSpeedSelectorContent(player = player, audioPlaybackSpeedMode = audioPlaybackSpeedMode)
     }
 }
 
 @OptIn(UnstableApi::class)
 @Composable
-fun PlaybackSpeedSelectorContent(player: Player) {
+fun PlaybackSpeedSelectorContent(
+    player: Player,
+    audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
+) {
     val hapticFeedback = LocalHapticFeedback.current
     val tokens = rememberPlayerPanelTokens()
-    val playbackParametersState = rememberPlaybackParametersState(player)
+    val playbackParametersState = rememberPlaybackParametersState(player, audioPlaybackSpeedMode)
     Column(
         modifier = Modifier
             .verticalScroll(rememberScrollState())

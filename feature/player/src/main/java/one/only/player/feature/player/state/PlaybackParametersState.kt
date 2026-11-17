@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.listen
 import androidx.media3.common.util.UnstableApi
@@ -15,16 +16,23 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import one.only.player.core.model.AudioPlaybackSpeedMode
+import one.only.player.core.model.pitchFor
 import one.only.player.feature.player.service.isSkipSilenceEnabled
 import one.only.player.feature.player.service.setSkipSilenceEnabled
 import one.only.player.feature.player.service.setTransientPlaybackSpeed
 
 @UnstableApi
 @Composable
-fun rememberPlaybackParametersState(player: Player): PlaybackParametersState {
+fun rememberPlaybackParametersState(
+    player: Player,
+    audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
+): PlaybackParametersState {
     val scope = rememberCoroutineScope()
-    val playbackParametersState = remember { PlaybackParametersState(player, scope) }
-    LaunchedEffect(player) { playbackParametersState.observe() }
+    val playbackParametersState = remember(player, audioPlaybackSpeedMode) {
+        PlaybackParametersState(player, scope, audioPlaybackSpeedMode)
+    }
+    LaunchedEffect(player, audioPlaybackSpeedMode) { playbackParametersState.observe() }
     return playbackParametersState
 }
 
@@ -32,6 +40,7 @@ fun rememberPlaybackParametersState(player: Player): PlaybackParametersState {
 class PlaybackParametersState(
     private val player: Player,
     private val scope: CoroutineScope,
+    private val audioPlaybackSpeedMode: AudioPlaybackSpeedMode,
 ) {
     var speed: Float by mutableFloatStateOf(1f)
         private set
@@ -40,9 +49,10 @@ class PlaybackParametersState(
         private set
 
     fun setPlaybackSpeed(speed: Float) {
+        val pitch = audioPlaybackSpeedMode.pitchFor(speed)
         when (player) {
-            is MediaController -> player.setTransientPlaybackSpeed(speed)
-            else -> player.setPlaybackSpeed(speed)
+            is MediaController -> player.setTransientPlaybackSpeed(speed, pitch)
+            else -> player.setPlaybackParameters(PlaybackParameters(speed, pitch))
         }
     }
 

@@ -2,6 +2,7 @@ package one.only.player.feature.player.service.playback
 
 import androidx.media3.common.Format
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
@@ -12,6 +13,7 @@ import androidx.media3.exoplayer.source.LoadEventInfo
 import androidx.media3.exoplayer.source.MediaLoadData
 import java.io.IOException
 import one.only.player.core.common.Logger
+import one.only.player.core.model.AudioPlaybackSpeedMode
 import one.only.player.feature.player.extensions.diagnostics
 import one.only.player.feature.player.extensions.toLogString
 import one.only.player.feature.player.service.effects.VideoEffectsCoordinator
@@ -21,6 +23,7 @@ internal class PlaybackStartupAnalyticsListener(
     private val tag: String,
     private val currentPlayerProvider: () -> ExoPlayer?,
     private val videoEffectsCoordinator: VideoEffectsCoordinator,
+    private val audioPlaybackSpeedModeProvider: () -> AudioPlaybackSpeedMode,
 ) : AnalyticsListener {
 
     private var startupTimestamp = 0L
@@ -42,6 +45,18 @@ internal class PlaybackStartupAnalyticsListener(
         hasReachedReady = false
         isCurrentBufferingStall = false
         Logger.info(tag, "startup mediaItem reason=$reason")
+    }
+
+    override fun onPlaybackParametersChanged(
+        eventTime: AnalyticsListener.EventTime,
+        playbackParameters: PlaybackParameters,
+    ) {
+        val mode = audioPlaybackSpeedModeProvider()
+        Logger.info(
+            tag,
+            "audioPlaybackParameters mode=$mode nativeOutput=${mode == AudioPlaybackSpeedMode.ANDROID_AUDIO_TRACK} " +
+                "speed=${playbackParameters.speed} pitch=${playbackParameters.pitch}",
+        )
     }
 
     override fun onPlaybackStateChanged(

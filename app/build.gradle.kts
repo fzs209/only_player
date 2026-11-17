@@ -21,7 +21,7 @@ android {
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        applicationId = "io.github.fzs209.onlyplayer"
+        applicationId = "one.only.player.test"
         versionCode = 302
         versionName = "1.1.2"
     }

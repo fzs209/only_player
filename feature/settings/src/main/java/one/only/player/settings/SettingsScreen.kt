@@ -305,6 +305,11 @@ internal enum class SettingRow(
         subSettingResIds = listOf(
             R.string.resume,
             R.string.default_playback_speed,
+            R.string.audio_playback_speed_mode,
+            R.string.audio_playback_speed_mode_description,
+            R.string.audio_playback_speed_mode_sonic,
+            R.string.audio_playback_speed_mode_android,
+            R.string.audio_playback_speed_mode_pitch,
             R.string.autoplay_settings,
             R.string.pause_at_end_of_queue,
             R.string.pip_mode,

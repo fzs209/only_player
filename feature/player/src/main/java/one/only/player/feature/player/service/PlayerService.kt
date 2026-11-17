@@ -15,6 +15,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.ParserException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.DISCONTINUITY_REASON_AUTO_TRANSITION
@@ -99,12 +100,14 @@ import one.only.player.core.media.container.detectMpegTsProgramMapPidFix
 import one.only.player.core.media.container.isMpegTsStream
 import one.only.player.core.media.container.patchMpegTsProgramMapPid
 import one.only.player.core.media.container.toMpegTsPidHex
+import one.only.player.core.model.AudioPlaybackSpeedMode
 import one.only.player.core.model.DecoderPriority
 import one.only.player.core.model.LoopMode
 import one.only.player.core.model.PlayerPreferences
 import one.only.player.core.model.Resume
 import one.only.player.core.model.SubtitleCalibration
 import one.only.player.core.model.ThemeConfig
+import one.only.player.core.model.pitchFor
 import one.only.player.core.ui.R as coreUiR
 import one.only.player.feature.player.PlayerActivity
 import one.only.player.feature.player.datasource.FtpDataSource
@@ -286,6 +289,7 @@ class PlayerService : MediaSessionService() {
     private var pendingRememberedSubtitleSelection: PendingSubtitleSelection? = null
     private var pendingExternalSubtitleSelection: ExternalSubtitleSelection? = null
     private var activeDecoderPriority: DecoderPriority = DecoderPriority.AUTOMATIC
+    private var activeAudioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC
     private var hasPausedAtEndOfQueue = false
     private var customPictureInPictureOverlay: CustomPictureInPictureOverlay? = null
     private var sessionLoadErrorHandlingPolicy: LoadErrorHandlingPolicy? = null
@@ -314,7 +318,13 @@ class PlayerService : MediaSessionService() {
             tag = TAG,
             currentPlayerProvider = { mediaSession?.player as? ExoPlayer },
             videoEffectsCoordinator = videoEffectsCoordinator,
+            audioPlaybackSpeedModeProvider = { playerPreferences.audioPlaybackSpeedMode },
         )
+    }
+
+    private fun applyPlaybackSpeed(player: Player, speed: Float) {
+        val pitch = playerPreferences.audioPlaybackSpeedMode.pitchFor(speed)
+        player.setPlaybackParameters(PlaybackParameters(speed, pitch))
     }
 
     private fun resolveTransitionPlaybackSpeed(
@@ -390,8 +400,9 @@ class PlayerService : MediaSessionService() {
             }
             mediaItem?.mediaMetadata?.let { metadata ->
                 mediaSession?.player?.run {
-                    setPlaybackSpeed(
-                        resolveTransitionPlaybackSpeed(
+                    applyPlaybackSpeed(
+                        player = this,
+                        speed = resolveTransitionPlaybackSpeed(
                             transitionReason = reason,
                             currentPlaybackSpeed = playbackParameters.speed,
                         ),
@@ -613,13 +624,13 @@ class PlayerService : MediaSessionService() {
             if (playbackState == Player.STATE_IDLE) {
                 val player = mediaSession?.player ?: return
                 player.trackSelectionParameters = TrackSelectionParameters.DEFAULT
-                player.setPlaybackSpeed(playerPreferences.defaultPlaybackSpeed)
+                applyPlaybackSpeed(player, playerPreferences.defaultPlaybackSpeed)
                 return
             }
 
             if (playbackState == Player.STATE_ENDED) {
                 val player = mediaSession?.player ?: return
-                player.setPlaybackSpeed(playerPreferences.defaultPlaybackSpeed)
+                applyPlaybackSpeed(player, playerPreferences.defaultPlaybackSpeed)
                 if (player.isEndOfQueuePauseEnabled()) {
                     hasPausedAtEndOfQueue = true
                     player.pause()
@@ -662,7 +673,7 @@ class PlayerService : MediaSessionService() {
             val player = mediaSession?.player ?: return
             if (player.isEndOfQueuePauseEnabled()) {
                 hasPausedAtEndOfQueue = true
-                player.setPlaybackSpeed(playerPreferences.defaultPlaybackSpeed)
+                applyPlaybackSpeed(player, playerPreferences.defaultPlaybackSpeed)
                 player.updatePauseAtEndOfMediaItems()
                 return
             }
@@ -878,7 +889,8 @@ class PlayerService : MediaSessionService() {
     }
 
     private fun switchPlayerDecoderPriority(decoderPriority: DecoderPriority) {
-        if (decoderPriority == activeDecoderPriority) return
+        val audioPlaybackSpeedMode = playerPreferences.audioPlaybackSpeedMode
+        if (decoderPriority == activeDecoderPriority && audioPlaybackSpeedMode == activeAudioPlaybackSpeedMode) return
         val session = mediaSession ?: return
         val currentPlayer = session.player as? ExoPlayer ?: return
         // 会话接入新播放器前，整条队列必须携带新解码器的可用状态。
@@ -889,7 +901,7 @@ class PlayerService : MediaSessionService() {
             )
         }
         if (mediaItems.isEmpty()) {
-            Logger.info(TAG, "Switch decoder to ${decoderPriority.logName()} without active media items")
+            Logger.info(TAG, "Switch player configuration to decoder=${decoderPriority.logName()} audioSpeedMode=$audioPlaybackSpeedMode without active media items")
             val nextPlayer = createPlayer(
                 decoderPriority = decoderPriority,
             )
@@ -905,7 +917,11 @@ class PlayerService : MediaSessionService() {
         val currentIndex = currentPlayer.currentMediaItemIndex.coerceIn(0, mediaItems.lastIndex)
         val playbackPosition = currentPlayer.currentPosition.coerceAtLeast(0L)
         val shouldPlayWhenReady = currentPlayer.playWhenReady
-        val playbackParameters = currentPlayer.playbackParameters
+        val currentPlaybackParameters = currentPlayer.playbackParameters
+        val playbackParameters = PlaybackParameters(
+            currentPlaybackParameters.speed,
+            audioPlaybackSpeedMode.pitchFor(currentPlaybackParameters.speed),
+        )
         val trackSelectionParameters = currentPlayer.trackSelectionParameters
         val shuffleModeEnabled = currentPlayer.shuffleModeEnabled
         val repeatMode = currentPlayer.repeatMode
@@ -918,7 +934,7 @@ class PlayerService : MediaSessionService() {
         )
         Logger.info(
             TAG,
-            "Switch decoder from ${currentDecoderPriority.logName()} to ${decoderPriority.logName()} at index=$currentIndex position=$playbackPosition",
+            "Switch player configuration from decoder=${currentDecoderPriority.logName()} to decoder=${decoderPriority.logName()} audioSpeedMode=$audioPlaybackSpeedMode at index=$currentIndex position=$playbackPosition",
         )
 
         nextPlayer.setMediaItems(mediaItems, currentIndex, playbackPosition)
@@ -1325,7 +1341,7 @@ class PlayerService : MediaSessionService() {
 
     private fun handleRepeatedPlayback(player: Player) {
         if (player.currentMediaItem == null) return
-        player.setPlaybackSpeed(playerPreferences.defaultPlaybackSpeed)
+        applyPlaybackSpeed(player, playerPreferences.defaultPlaybackSpeed)
         applySubtitleCalibration(player, activeSubtitleCalibration)
     }
 
@@ -1499,17 +1515,25 @@ class PlayerService : MediaSessionService() {
 
                 CustomCommands.SET_PERSISTENT_PLAYBACK_SPEED -> {
                     val playbackSpeed = args.getFloat(CustomCommands.PLAYBACK_SPEED_KEY)
+                    val playbackPitch = args.getFloat(
+                        CustomCommands.PLAYBACK_PITCH_KEY,
+                        playerPreferences.audioPlaybackSpeedMode.pitchFor(playbackSpeed),
+                    )
                     val player = mediaSession?.player
                         ?: return@future SessionResult(SessionError.ERROR_BAD_VALUE)
-                    player.setPlaybackSpeed(playbackSpeed)
+                    player.setPlaybackParameters(PlaybackParameters(playbackSpeed, playbackPitch))
                     return@future SessionResult(SessionResult.RESULT_SUCCESS)
                 }
 
                 CustomCommands.SET_TRANSIENT_PLAYBACK_SPEED -> {
                     val playbackSpeed = args.getFloat(CustomCommands.PLAYBACK_SPEED_KEY)
+                    val playbackPitch = args.getFloat(
+                        CustomCommands.PLAYBACK_PITCH_KEY,
+                        playerPreferences.audioPlaybackSpeedMode.pitchFor(playbackSpeed),
+                    )
                     val player = mediaSession?.player
                         ?: return@future SessionResult(SessionError.ERROR_BAD_VALUE)
-                    player.setPlaybackSpeed(playbackSpeed)
+                    player.setPlaybackParameters(PlaybackParameters(playbackSpeed, playbackPitch))
                     return@future SessionResult(SessionResult.RESULT_SUCCESS)
                 }
 
@@ -1693,6 +1717,8 @@ class PlayerService : MediaSessionService() {
             TAG,
             "Create player decoder=${decoderPriority.logName()} policy=$decoderPriority extensionRendererMode=$extensionRendererMode decoderFallback=$shouldEnableDecoderFallback audioExtensionFallback=$shouldUseAudioExtensionFallback spatial=${preferences.isSpatialAudioEnabled} spatializer(supported=${spatializer.isSupported}, available=${spatializer.isAvailable}, enabled=${spatializer.isEnabled}) oemDolby(present=${oemDolby.isPresent}, implementer=${oemDolby.implementer}, effect=${oemDolby.effectName})",
         )
+        val audioPlaybackSpeedMode = preferences.audioPlaybackSpeedMode
+        activeAudioPlaybackSpeedMode = audioPlaybackSpeedMode
         val renderersFactory = NormalizingRenderersFactory(
             context = applicationContext,
             audioProcessors = audioEffectsCoordinator.createAudioProcessors(preferences),
@@ -1701,6 +1727,9 @@ class PlayerService : MediaSessionService() {
             .setMediaCodecSelector(DolbyPreferringMediaCodecSelector)
             .setEnableDecoderFallback(shouldEnableDecoderFallback)
             .setExtensionRendererMode(extensionRendererMode)
+            .setEnableAudioOutputPlaybackParameters(
+                audioPlaybackSpeedMode == AudioPlaybackSpeedMode.ANDROID_AUDIO_TRACK,
+            )
 
         val trackSelector = DefaultTrackSelector(applicationContext).apply {
             setParameters(
@@ -1747,7 +1776,10 @@ class PlayerService : MediaSessionService() {
         }
         serviceScope.launch {
             preferencesRepository.playerPreferences
-                .distinctUntilChanged { old, new -> old.decoderPriority == new.decoderPriority }
+                .distinctUntilChanged { old, new ->
+                    old.decoderPriority == new.decoderPriority &&
+                        old.audioPlaybackSpeedMode == new.audioPlaybackSpeedMode
+                }
                 .collect { preferences -> switchPlayerDecoderPriority(preferences.decoderPriority) }
         }
         serviceScope.launch {

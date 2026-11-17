@@ -14,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.IntSize
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.session.MediaController
@@ -22,8 +23,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import one.only.player.core.common.extensions.round
+import one.only.player.core.model.AudioPlaybackSpeedMode
 import one.only.player.core.model.DoubleTapGesture
 import one.only.player.core.model.PlayerPreferences
+import one.only.player.core.model.pitchFor
 import one.only.player.feature.player.extensions.canSeekCurrentMediaItem
 import one.only.player.feature.player.extensions.seekByRequestedOffset
 import one.only.player.feature.player.service.setTransientPlaybackSpeed
@@ -37,6 +40,7 @@ fun rememberTapGestureState(
     shouldUseLongPressGesture: Boolean,
     shouldUseLongPressVariableSpeed: Boolean,
     longPressSpeed: Float,
+    audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
 ): TapGestureState {
     val coroutineScope = rememberCoroutineScope()
     val tapGestureState = remember(
@@ -46,6 +50,7 @@ fun rememberTapGestureState(
         shouldUseLongPressGesture,
         shouldUseLongPressVariableSpeed,
         longPressSpeed,
+        audioPlaybackSpeedMode,
         coroutineScope,
     ) {
         TapGestureState(
@@ -55,6 +60,7 @@ fun rememberTapGestureState(
             shouldUseLongPressGesture = shouldUseLongPressGesture,
             shouldUseLongPressVariableSpeed = shouldUseLongPressVariableSpeed,
             longPressSpeed = longPressSpeed,
+            audioPlaybackSpeedMode = audioPlaybackSpeedMode,
             coroutineScope = coroutineScope,
         )
     }
@@ -68,6 +74,7 @@ class TapGestureState(
     private val shouldUseLongPressGesture: Boolean = true,
     private val shouldUseLongPressVariableSpeed: Boolean = false,
     private val coroutineScope: CoroutineScope,
+    private val audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
     val longPressSpeed: Float = PlayerPreferences.DEFAULT_LONG_PRESS_CONTROLS_SPEED,
     val doubleTapGesture: DoubleTapGesture,
     val interactionSource: MutableInteractionSource = MutableInteractionSource(),
@@ -189,9 +196,10 @@ class TapGestureState(
     }
 
     private fun Player.setPlaybackSpeedWithoutPersistence(speed: Float) {
+        val pitch = audioPlaybackSpeedMode.pitchFor(speed)
         when (this) {
-            is MediaController -> setTransientPlaybackSpeed(speed)
-            else -> setPlaybackSpeed(speed)
+            is MediaController -> setTransientPlaybackSpeed(speed, pitch)
+            else -> setPlaybackParameters(PlaybackParameters(speed, pitch))
         }
     }
 

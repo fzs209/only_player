@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import one.only.player.core.common.extensions.round
 import one.only.player.core.data.repository.PreferencesRepository
+import one.only.player.core.model.AudioPlaybackSpeedMode
 import one.only.player.core.model.ControllerAutoHidePreset
 import one.only.player.core.model.PictureInPictureMode
 import one.only.player.core.model.PlayerControl
@@ -55,6 +56,7 @@ class PlayerPreferencesViewModel @Inject constructor(
             PlayerPreferencesUiEvent.ToggleRememberPlayerScreenOrientation -> toggleRememberPlayerScreenOrientation()
             is PlayerPreferencesUiEvent.UpdatePreferredPlayerOrientation -> updatePreferredPlayerOrientation(event.value)
             is PlayerPreferencesUiEvent.UpdateDefaultPlaybackSpeed -> updateDefaultPlaybackSpeed(event.value)
+            is PlayerPreferencesUiEvent.UpdateAudioPlaybackSpeedMode -> updateAudioPlaybackSpeedMode(event.value)
             is PlayerPreferencesUiEvent.UpdateControlAutoHidePreset -> updateControlAutoHidePreset(event.value)
             is PlayerPreferencesUiEvent.UpdateControlAutoHideTimeout -> updateControlAutoHideTimeout(event.value)
             PlayerPreferencesUiEvent.ToggleDimVideoWhenControlsVisible -> toggleDimVideoWhenControlsVisible()
@@ -162,6 +164,14 @@ class PlayerPreferencesViewModel @Inject constructor(
         }
     }
 
+    private fun updateAudioPlaybackSpeedMode(value: AudioPlaybackSpeedMode) {
+        viewModelScope.launch {
+            preferencesRepository.updatePlayerPreferences {
+                it.copy(audioPlaybackSpeedMode = value)
+            }
+        }
+    }
+
     private fun updateControlAutoHideTimeout(value: Int) {
         viewModelScope.launch {
             preferencesRepository.updatePlayerPreferences {
@@ -230,6 +240,7 @@ sealed interface PlayerPreferenceDialog {
     data object ControllerAutoHideDialog : PlayerPreferenceDialog
     data object PlayerScreenOrientationDialog : PlayerPreferenceDialog
     data object PictureInPictureModeDialog : PlayerPreferenceDialog
+    data object AudioPlaybackSpeedModeDialog : PlayerPreferenceDialog
 }
 
 sealed interface PlayerPreferencesUiEvent {
@@ -244,6 +255,7 @@ sealed interface PlayerPreferencesUiEvent {
     data object ToggleRememberPlayerScreenOrientation : PlayerPreferencesUiEvent
     data class UpdatePreferredPlayerOrientation(val value: ScreenOrientation) : PlayerPreferencesUiEvent
     data class UpdateDefaultPlaybackSpeed(val value: Float) : PlayerPreferencesUiEvent
+    data class UpdateAudioPlaybackSpeedMode(val value: AudioPlaybackSpeedMode) : PlayerPreferencesUiEvent
     data class UpdateControlAutoHidePreset(val value: ControllerAutoHidePreset) : PlayerPreferencesUiEvent
     data class UpdateControlAutoHideTimeout(val value: Int) : PlayerPreferencesUiEvent
     data object ToggleDimVideoWhenControlsVisible : PlayerPreferencesUiEvent

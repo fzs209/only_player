@@ -30,6 +30,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import one.only.player.core.common.extensions.isPipFeatureSupported
 import one.only.player.core.common.extensions.round
+import one.only.player.core.model.AudioPlaybackSpeedMode
 import one.only.player.core.model.ControllerAutoHidePreset
 import one.only.player.core.model.PictureInPictureMode
 import one.only.player.core.model.PlayerPreferences
@@ -207,6 +208,15 @@ private fun PlayerPreferencesContent(
                         )
                     },
                 )
+                ClickablePreferenceItem(
+                    modifier = Modifier.testTag("item_settings_player_audio_speed_mode"),
+                    title = stringResource(R.string.audio_playback_speed_mode),
+                    description = uiState.preferences.audioPlaybackSpeedMode.displayName(),
+                    icon = AppIcons.Speed,
+                    onClick = {
+                        onEvent(PlayerPreferencesUiEvent.ShowDialog(PlayerPreferenceDialog.AudioPlaybackSpeedModeDialog))
+                    },
+                )
                 PreferenceSwitch(
                     modifier = Modifier.testTag("switch_settings_player_autoplay"),
                     title = stringResource(id = R.string.autoplay_settings),
@@ -298,6 +308,25 @@ private fun PlayerPreferencesContent(
                     }
                 }
 
+                PlayerPreferenceDialog.AudioPlaybackSpeedModeDialog -> {
+                    OptionsDialog(
+                        text = stringResource(R.string.audio_playback_speed_mode),
+                        onDismissClick = { onEvent(PlayerPreferencesUiEvent.ShowDialog(null)) },
+                    ) {
+                        items(AudioPlaybackSpeedMode.entries.toTypedArray()) { mode ->
+                            RadioTextButton(
+                                modifier = Modifier.testTag("option_settings_player_audio_speed_mode_${mode.name.lowercase()}"),
+                                text = mode.displayName(),
+                                isSelected = mode == uiState.preferences.audioPlaybackSpeedMode,
+                                onClick = {
+                                    onEvent(PlayerPreferencesUiEvent.UpdateAudioPlaybackSpeedMode(mode))
+                                    onEvent(PlayerPreferencesUiEvent.ShowDialog(null))
+                                },
+                            )
+                        }
+                    }
+                }
+
                 PlayerPreferenceDialog.PictureInPictureModeDialog -> {
                     OptionsDialog(
                         text = stringResource(id = R.string.pip_mode),
@@ -319,6 +348,13 @@ private fun PlayerPreferencesContent(
             }
         }
     }
+}
+
+@Composable
+private fun AudioPlaybackSpeedMode.displayName(): String = when (this) {
+    AudioPlaybackSpeedMode.MEDIA3_SONIC -> stringResource(R.string.audio_playback_speed_mode_sonic)
+    AudioPlaybackSpeedMode.ANDROID_AUDIO_TRACK -> stringResource(R.string.audio_playback_speed_mode_android)
+    AudioPlaybackSpeedMode.PITCH_FOLLOWS_SPEED -> stringResource(R.string.audio_playback_speed_mode_pitch)
 }
 
 @Composable

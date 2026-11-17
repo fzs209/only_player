@@ -144,6 +144,11 @@
     <string name="oldest">Oldest</string>
     <string name="date">Date</string>
     <string name="default_playback_speed">Default playback speed</string>
+    <string name="audio_playback_speed_mode">Audio speed processing</string>
+    <string name="audio_playback_speed_mode_description">Recreates the player to compare Media3 Sonic, Android AudioTrack and pitch-changing playback</string>
+    <string name="audio_playback_speed_mode_sonic">Media3 Sonic (preserve pitch)</string>
+    <string name="audio_playback_speed_mode_android">Android AudioTrack (system playback parameters)</string>
+    <string name="audio_playback_speed_mode_pitch">Speed and pitch together (diagnostic)</string>
     <string name="enter_a_network_url">Enter a network URL:</string>
     <string name="example_url" translatable="false">http://example.com/example.mp4</string>
     <string name="network_stream">Network Stream</string>
