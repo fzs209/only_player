@@ -40,7 +40,7 @@ fun rememberPlaybackParametersState(
 class PlaybackParametersState(
     private val player: Player,
     private val scope: CoroutineScope,
-    private val audioPlaybackSpeedMode: AudioPlaybackSpeedMode,
+    private val audioPlaybackSpeedMode: AudioPlaybackSpeedMode = AudioPlaybackSpeedMode.MEDIA3_SONIC,
 ) {
     var speed: Float by mutableFloatStateOf(1f)
         private set
