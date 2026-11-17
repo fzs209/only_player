@@ -15,8 +15,8 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.ParserException
-import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Player.DISCONTINUITY_REASON_AUTO_TRANSITION
 import androidx.media3.common.Player.DISCONTINUITY_REASON_REMOVE
@@ -901,7 +901,11 @@ class PlayerService : MediaSessionService() {
             )
         }
         if (mediaItems.isEmpty()) {
-            Logger.info(TAG, "Switch player configuration to decoder=${decoderPriority.logName()} audioSpeedMode=$audioPlaybackSpeedMode without active media items")
+            Logger.info(
+                TAG,
+                "Switch player configuration to decoder=${decoderPriority.logName()} " +
+                    "audioSpeedMode=$audioPlaybackSpeedMode without active media items",
+            )
             val nextPlayer = createPlayer(
                 decoderPriority = decoderPriority,
             )
